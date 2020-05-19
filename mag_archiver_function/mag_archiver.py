@@ -37,8 +37,8 @@ def main(timer: func.TimerRequest) -> None:
     # Update MagReleases Table based on discovered containers
     client.update_releases(containers)
 
-    # List all discovered MAG releases and sort from oldest to newest based on discovered date
-    releases: List[MagRelease] = client.list_releases(state=MagState.discovered, date_type=MagDateType.discovered,
+    # List all discovered MAG releases and sort from oldest to newest based on release date
+    releases: List[MagRelease] = client.list_releases(state=MagState.discovered, date_type=MagDateType.release,
                                                       reverse=False)
 
     # If 1 or more MAG releases was found then process the oldest one
