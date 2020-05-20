@@ -65,6 +65,33 @@ class MagDateType(Enum):
         return map_[self]
 
 
+def make_mag_query(start_date: Optional[Pendulum] = None, end_date: Optional[Pendulum] = None,
+                   state: Optional[MagState] = None, date_type: MagDateType = MagDateType.release):
+    """ Make a query for querying the Microsoft Academic releases.
+
+    :param start_date: start date for the query.
+    :param end_date: end date for the query.
+    :param state: the state of the MAG release.
+    :param date_type: the date type to query.
+    :return:
+    """
+
+    commands = []
+    date_format = '%Y-%m-%dT%H:%MZ'
+
+    if state is not None:
+        commands.append(f"State eq '{state.value}'")
+
+    if start_date is not None:
+        commands.append(f"{date_type.value} ge datetime'{start_date.strftime(date_format)}'")
+
+    if end_date is not None:
+        commands.append(f"{date_type.value} lt datetime'{end_date.strftime(date_format)}'")
+
+    query = ' and '.join(commands)
+    return query
+
+
 class MagContainer:
 
     def __init__(self, name: str, last_modified: Pendulum, release_date: Pendulum):
@@ -143,6 +170,11 @@ class MagRelease:
 
         return success
 
+    def delete(self):
+        self.__assert_account("MagRelease.delete: account_name and account_key must be supplied.")
+        service = self.__table_service()
+        service.delete_entity(MagRelease.TABLE_NAME, self.partition_key, self.row_key)
+
     def archive(self, target_container: str, target_folder: str):
         self.__assert_account("MagRelease.archive: account_name and account_key must be supplied.")
         return copy_container(self.account_name, self.account_key, self.source_container, target_container,
@@ -152,37 +184,12 @@ class MagRelease:
         self.__assert_account("MagRelease.cleanup: account_name and account_key must be supplied.")
         return delete_container(self.account_name, self.account_key, self.source_container)
 
-    def update_state(self, state: MagState):
-        assert state is not MagState.discovered, "MagRelease.update_state: only accepts archived and done states."
+    def update(self):
         self.__assert_account("MagRelease.update_state: account_name and account_key must be supplied.")
 
-        # Create entity
-        entity = dict()
-        entity[MagRelease.__PARTITION_KEY] = self.partition_key
-        entity[MagRelease.__ROW_KEY] = self.row_key
-        entity[MagRelease.__STATE] = state.value
-        current_dt = pendulum.datetime.now(pendulum.timezone('UTC'))
-        if state is MagState.archived:
-            entity[MagRelease.__ARCHIVED_DATE] = current_dt
-        elif state is MagState.done:
-            entity[MagRelease.__DONE_DATE] = current_dt
-
         # Update properties
         service = self.__table_service()
-        return service.merge_entity(MagRelease.TABLE_NAME, entity)
-
-    def update_task(self, task: MagTask):
-        self.__assert_account("MagRelease.update_task: account_name and account_key must be supplied.")
-
-        # Create entity
-        entity = dict()
-        entity[MagRelease.__PARTITION_KEY] = self.partition_key
-        entity[MagRelease.__ROW_KEY] = self.row_key
-        entity[MagRelease.__TASK] = task.value
-
-        # Update properties
-        service = self.__table_service()
-        return service.merge_entity(MagRelease.TABLE_NAME, entity)
+        return service.update_entity(MagRelease.TABLE_NAME, self.to_entity())
 
     @staticmethod
     def from_entity(entity: dict, account_name: Optional[str] = None, account_key: Optional[str] = None):
@@ -227,33 +234,6 @@ class MagRelease:
         return f"MAG release {self.release_date.strftime('%Y-%m-%d')}"
 
 
-def make_mag_query(start_date: Optional[Pendulum] = None, end_date: Optional[Pendulum] = None,
-                   state: Optional[MagState] = None, date_type: MagDateType = MagDateType.release):
-    """ Make a query for querying the Microsoft Academic releases.
-
-    :param start_date: start date for the query.
-    :param end_date: end date for the query.
-    :param state: the state of the MAG release.
-    :param date_type: the date type to query.
-    :return:
-    """
-
-    commands = []
-    date_format = '%Y-%m-%dT%H:%MZ'
-
-    if state is not None:
-        commands.append(f"State eq '{state.value}'")
-
-    if start_date is not None:
-        commands.append(f"{date_type.value} ge datetime'{start_date.strftime(date_format)}'")
-
-    if end_date is not None:
-        commands.append(f"{date_type.value} lt datetime'{end_date.strftime(date_format)}'")
-
-    query = ' and '.join(commands)
-    return query
-
-
 class MagArchiverClient:
     __MAG_RELEASE_RE = re.compile("mag-[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
@@ -275,8 +255,8 @@ class MagArchiverClient:
             -> List[MagContainer]:
         """ List all blob containers holding MAG releases.
 
-        :param last_modified_thresh: only include containers that were last modified greater than a specific number of
-        hours.
+        :param last_modified_thresh: only include containers that were last modified greater than or equal to a
+        specific number of hours.
         :param reverse: sort from oldest to newest using release_date datetime.
         :return:
         """
@@ -298,7 +278,7 @@ class MagArchiverClient:
             if MagArchiverClient.__MAG_RELEASE_RE.match(container_name) is not None:
                 # Add of no last_modified_thresh supplied or if the hours since modified is greater than the last
                 # modified threshold
-                if last_modified_thresh is None or last_modified_thresh < hours_since_modified:
+                if last_modified_thresh is None or last_modified_thresh <= hours_since_modified:
                     release_date_str = container.name.replace("mag-", "")
                     release_date = pendulum.parse(release_date_str)
                     mag_container = MagContainer(container_name, last_modified, release_date)
