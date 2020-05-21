@@ -31,21 +31,27 @@ from mag_archiver.azure import list_containers
 
 
 class MagState(Enum):
+    """ The state of the MAG release """
+
     discovered = 'discovered'
     archived = 'archived'
     done = 'done'
 
 
 class MagTask(Enum):
+    """ The current task being executed """
+
     not_started = 'not-started'
     copying_to_vm = 'copying-to-vm'
     archiving = 'archiving'
     copying_to_release_container = 'copying-to-release-container'
-    deleting_source_container = 'deleting-source-container'
+    cleaning_up = 'cleaning-up'
     done = 'done'
 
 
 class MagDateType(Enum):
+    """ The date field type """
+
     release = 'ReleaseDate'
     discovered = 'DiscoveredDate'
     archived = 'ArchivedDate'
@@ -66,14 +72,14 @@ class MagDateType(Enum):
 
 
 def make_mag_query(start_date: Optional[Pendulum] = None, end_date: Optional[Pendulum] = None,
-                   state: Optional[MagState] = None, date_type: MagDateType = MagDateType.release):
-    """ Make a query for querying the Microsoft Academic releases.
+                   state: Optional[MagState] = None, date_type: MagDateType = MagDateType.release) -> str:
+    """ Build a query for the MagReleases table.
 
-    :param start_date: start date for the query.
-    :param end_date: end date for the query.
+    :param start_date: start date for the query (inclusive).
+    :param end_date: end date for the query (exclusive).
     :param state: the state of the MAG release.
     :param date_type: the date type to query.
-    :return:
+    :return: the query.
     """
 
     commands = []
@@ -95,6 +101,13 @@ def make_mag_query(start_date: Optional[Pendulum] = None, end_date: Optional[Pen
 class MagContainer:
 
     def __init__(self, name: str, last_modified: Pendulum, release_date: Pendulum):
+        """ Microsoft Academic Graph container class.
+
+        :param name: name of the container.
+        :param last_modified: date that the container was last modified.
+        :param release_date: date that the MAG release was released.
+        """
+
         self.name = name
         self.last_modified = last_modified
         self.release_date = release_date
@@ -119,22 +132,25 @@ class MagRelease:
                  source_container: str, source_container_last_modified: Pendulum, release_container: str,
                  release_path: str, discovered_date: Pendulum, archived_date: Pendulum, done_date: Pendulum,
                  account_name: Optional[str] = None, account_key: Optional[str] = None):
-        """
-        :param partition_key: the partition key.
-        :param row_key: the row key.
-        :param state: the state that the MAG release is in.
-        :param task: the current task that is being executed.
-        :param release_date: the official release date for the MAG release. Note that releases are published much later
-        than the official date for the release.
-        :param source_container: the container where the MAG release was provisioned on.
-        :param source_container_last_modified: the date that the source container was last modified.
-        :param release_container: the container where the MAG releases are staged for data transfer.
-        :param release_path: the path to the MAG release on the release container.
-        :param discovered_date: the date that the MAG release was discovered.
-        :param archived_date: the date the the MAG release was archived. Set to the minimum date, i.e.
+        """ Microsoft Academic Graph release class.
+
+        :param partition_key: partition key.
+        :param row_key: the row key. partition_key + row_key form the primary key.
+        :param state: state that the MAG release is in.
+        :param task: current task that is being executed.
+        :param release_date: the official release date for the MAG release. Note that releases are provisioned onto
+        the Azure storage account about a week after the "release_date".
+        :param source_container: container where the MAG release was provisioned to.
+        :param source_container_last_modified: date that the source container was last modified.
+        :param release_container: container where the MAG releases are staged for data transfer.
+        :param release_path: path to the MAG release on the release container.
+        :param discovered_date: date that the MAG release was discovered by the MAG archiver.
+        :param archived_date: date the the MAG release was archived. Set to the minimum date, i.e.
         1601-01-01T00:00:00.000Z if not specified.
-        :param done_date: the date the MAG release is ready. Set to the minimum date, i.e.
+        :param done_date: date the MAG release is ready to be transferred. Set to the minimum date, i.e.
         1601-01-01T00:00:00.000Z if not specified.
+        :param account_name: Azure Storage account name.
+        :param account_key: Azure Storage account key.
         """
 
         self.partition_key = partition_key
@@ -158,7 +174,12 @@ class MagRelease:
     def __table_service(self):
         return TableService(account_name=self.account_name, account_key=self.account_key)
 
-    def create(self):
+    def create(self) -> bool:
+        """ Create the MagRelease instance in the MagReleases table.
+
+        :return: whether the instance was created or not.
+        """
+
         self.__assert_account("MagRelease.create: account_name and account_key must be supplied.")
         service = self.__table_service()
         success = True
@@ -170,21 +191,45 @@ class MagRelease:
 
         return success
 
-    def delete(self):
+    def delete(self) -> None:
+        """ Delete this MagRelease instance from the MagReleases table.
+
+        :return: None.
+        """
+
         self.__assert_account("MagRelease.delete: account_name and account_key must be supplied.")
         service = self.__table_service()
         service.delete_entity(MagRelease.TABLE_NAME, self.partition_key, self.row_key)
 
     def archive(self, target_container: str, target_folder: str):
+        """ Archive this MAG release into to the target container.
+
+        TODO: in the future this method should compress the release before copying it.
+
+        :param target_container: the container to copy the MAG release too.
+        :param target_folder: the folder within the target container to copy the MAG release into.
+        :return: None.
+        """
+
         self.__assert_account("MagRelease.archive: account_name and account_key must be supplied.")
         return copy_container(self.account_name, self.account_key, self.source_container, target_container,
                               target_folder)
 
     def cleanup(self):
+        """ Cleanup the source container.
+
+        :return:
+        """
+
         self.__assert_account("MagRelease.cleanup: account_name and account_key must be supplied.")
         return delete_container(self.account_name, self.account_key, self.source_container)
 
     def update(self):
+        """ Update this MAG release instance in the MagReleases table.
+
+        :return:
+        """
+
         self.__assert_account("MagRelease.update_state: account_name and account_key must be supplied.")
 
         # Update properties
@@ -193,6 +238,16 @@ class MagRelease:
 
     @staticmethod
     def from_entity(entity: dict, account_name: Optional[str] = None, account_key: Optional[str] = None):
+        """ Create a MagRelease instance from an entity dictionary.
+
+        :param entity: the entity returned from the Azure Table Storage API.
+        :param account_name: Azure Storage account name. Optional, only required if the create, delete, archive,
+        cleanup or update functions need to be used.
+        :param account_key: Azure Storage account key. Optional, only required if the create, delete, archive,
+        cleanup or update functions need to be used.
+        :return: the MagRelease instance.
+        """
+
         partition_key_ = entity[MagRelease.__PARTITION_KEY]
         row_key_ = entity[MagRelease.__ROW_KEY]
         state_ = MagState(entity[MagRelease.__STATE])
@@ -211,6 +266,11 @@ class MagRelease:
                           archived_date_, done_date_, account_name=account_name, account_key=account_key)
 
     def to_entity(self) -> dict:
+        """ Convert a MagRelease instance into an Azure Table Storage entity.
+
+        :return: an Azure Table Storage entity.
+        """
+
         entity = dict()
         entity[MagRelease.__PARTITION_KEY] = self.partition_key
         entity[MagRelease.__ROW_KEY] = self.row_key
@@ -241,9 +301,9 @@ class MagArchiverClient:
                  sas_token: Optional[str] = None):
         """
 
-        :param account_name: the name of the Azure storage account where the Microsoft Academic Graph releases are
+        :param account_name: the name of the Azure Storage account where the Microsoft Academic Graph releases are
         provisioned and the `MagReleases` Azure Storage Table is stored.
-        :param account_key: the key to the storage account.
+        :param account_key: the key to Azure Storage account.
         :param sas_token: the shared access token to use for authentication instead of the account_key.
         """
 
@@ -253,12 +313,12 @@ class MagArchiverClient:
 
     def list_containers(self, last_modified_thresh: Optional[float] = None, reverse: bool = False) \
             -> List[MagContainer]:
-        """ List all blob containers holding MAG releases.
+        """ List all Azure Storage Blob Containers holding MAG releases.
 
         :param last_modified_thresh: only include containers that were last modified greater than or equal to a
         specific number of hours.
         :param reverse: sort from oldest to newest using release_date datetime.
-        :return:
+        :return: the containers holding MAG releases.
         """
 
         # List all containers in the storage account
@@ -289,6 +349,12 @@ class MagArchiverClient:
         return mag_containers
 
     def update_releases(self, containers: List[MagContainer]):
+        """ Update the releases in the MagReleases table based on a list of containers containing MAG releases.
+
+        :param containers: the containers containing MAG releases.
+        :return: the number of releases created and the number of errors.
+        """
+
         min_date = pendulum.datetime(1601, 1, 1)
         discovered_date = pendulum.now()
 
@@ -303,7 +369,7 @@ class MagArchiverClient:
         logging.info(f"Num new containers discovered: {num_new_containers}")
 
         # Only add new containers
-        num_updated = 0
+        num_created = 0
         num_errors = 0
         for container in containers:
             if container.name in new_container_index:
@@ -315,22 +381,22 @@ class MagArchiverClient:
                                      account_key=self.account_key)
                 success = release.create()
                 if success:
-                    num_updated += 1
+                    num_created += 1
                 else:
                     num_errors += 1
-        return num_updated, num_errors
+        return num_created, num_errors
 
     def list_releases(self, start_date: Optional[Pendulum] = None,
                       end_date: Optional[Pendulum] = None, state: Optional[MagState] = None,
-                      date_type: MagDateType = MagDateType.release, reverse: bool = False):
-        """ List Microsoft Academic releases.
+                      date_type: MagDateType = MagDateType.release, reverse: bool = False) -> List[MagRelease]:
+        """ List Microsoft Academic releases in the MagReleases Azure Storage Table.
 
         :param start_date: start date for the query.
         :param end_date: end date for the query.
         :param state: the state of the MAG release.
         :param date_type: the date type to query.
         :param reverse: whether to reverse sort the results. Sorting is performed on the date type.
-        :return:
+        :return: the list of MagReleases found.
         """
 
         # Query and fetch releases
