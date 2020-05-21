@@ -12,6 +12,7 @@ to other cloud services.
   * Under Blob Service > Lifecycle Management > Code view: add the life-cycle rules from lifecycle-rules.json
     * These rules move blobs to the cold tier after 30 days and delete the blobs after 61 days.
 * [Create an Azure Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-function-app-portal)
+  * Take note of your function app name, you will need it later.
   * Under Settings > Configuration > Application settings, add the following Application settings (name: value):
     * STORAGE_ACCOUNT_NAME: the name of your storage account.
     * STORAGE_ACCOUNT_KEY: they key for your storage account.
@@ -52,5 +53,5 @@ cd mag-archiver
 
 Deploy the function:
 ```bash
-func azure functionapp publish mag-archiver
+func azure functionapp publish <your function app name>
 ```
