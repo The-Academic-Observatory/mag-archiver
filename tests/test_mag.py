@@ -25,11 +25,24 @@ from azure.cosmosdb.table.tableservice import TableService
 from azure.storage.blob import ContainerProperties
 
 from mag_archiver.azure import create_table
-from mag_archiver.mag import MagArchiverClient
-from mag_archiver.mag import make_mag_query, MagState, MagDateType, MagRelease, MagTask
+from mag_archiver.mag import make_mag_query, MagState, MagDateType, MagRelease, MagTask, MagArchiverClient, \
+    hide_if_not_none
 
 
 class TestMag(unittest.TestCase):
+
+    def test_hide_if_not_none(self):
+        # Test that None is returned for None
+        value = hide_if_not_none(None)
+        self.assertEqual(value, None)
+
+        # Test that 'hidden' is returned: string
+        value = hide_if_not_none('hello world')
+        self.assertEqual(value, 'hidden')
+
+        # Test that 'hidden' is returned: integer
+        value = hide_if_not_none(123)
+        self.assertEqual(value, 'hidden')
 
     def test_make_mag_query(self):
         start_date = pendulum.datetime(year=2020, month=4, day=1)
@@ -135,6 +148,21 @@ class TestMagRelease(unittest.TestCase):
         self.account_key = os.getenv('STORAGE_ACCOUNT_KEY')
         create_table(self.account_name, self.account_key, MagRelease.TABLE_NAME)
 
+    def test_secrets_hidden(self):
+        # Check that account key is hidden
+        account_name = 'myaccountname'
+        secret = 'secret'
+
+        # Check that account_key and sas_token are hidden
+        release = make_mag_release(account_name, secret, 2020, 1, 1)
+        self.assertIn('account_key=hidden', release.__repr__())
+        self.assertNotIn(secret, release.__str__())
+        self.assertNotIn(secret, release.__repr__())
+
+        # Check that account_key is None
+        release = make_mag_release(account_name, None, 2020, 1, 1)
+        self.assertIn('account_key=None', release.__repr__())
+
     def test_create(self):
         release = make_mag_release(self.account_name, self.account_key, 2019, 6, 1)
         try:
@@ -201,6 +229,25 @@ class TestMagArchiverClient(unittest.TestCase):
         self.account_name = os.getenv('STORAGE_ACCOUNT_NAME')
         self.account_key = os.getenv('STORAGE_ACCOUNT_KEY')
         create_table(self.account_name, self.account_key, MagRelease.TABLE_NAME)
+
+    def test_secrets_hidden(self):
+        # Check that account key is hidden
+        account_name = 'myaccountname'
+        secret = 'secret'
+
+        # Check that account_key and sas_token are hidden
+        client = MagArchiverClient(account_name=account_name, account_key=secret, sas_token=secret)
+        expected = f'MagArchiverClient(account_name={account_name}, account_key=hidden, sas_token=hidden)'
+        self.assertEqual(client.__str__(), expected)
+        self.assertEqual(client.__repr__(), expected)
+        self.assertNotIn(secret, client.__str__())
+        self.assertNotIn(secret, client.__repr__())
+
+        # Check that account_key and sas_token are None
+        client = MagArchiverClient(account_name=account_name)
+        expected = f'MagArchiverClient(account_name={account_name}, account_key=None, sas_token=None)'
+        self.assertEqual(client.__str__(), expected)
+        self.assertEqual(client.__repr__(), expected)
 
     @patch('mag_archiver.mag.list_containers')
     @patch('pendulum.datetime.now')

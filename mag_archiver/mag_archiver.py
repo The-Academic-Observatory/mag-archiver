@@ -14,6 +14,7 @@
 
 # Author: James Diprose
 
+import logging
 import os
 from typing import List
 
@@ -28,31 +29,50 @@ def main(timer: func.TimerRequest) -> None:
     account_name = os.getenv('STORAGE_ACCOUNT_NAME')
     account_key = os.getenv('STORAGE_ACCOUNT_KEY')
     target_container = os.getenv('TARGET_CONTAINER')
-    assert account_name is not None and account_key is not None and target_container is not None, \
-        "The environment variables STORAGE_ACCOUNT_NAME, STORAGE_ACCOUNT_KEY and TARGET_CONTAINER must be set."
+
+    # Check all environment variables are specified
+    req_env_vars = account_name is not None and account_key is not None and target_container is not None
+    req_env_vars_msg = "The environment variables STORAGE_ACCOUNT_NAME, STORAGE_ACCOUNT_KEY and TARGET_CONTAINER " \
+                       "must be set."
+    if not req_env_vars:
+        logging.error(req_env_vars_msg)
+    assert req_env_vars, req_env_vars_msg
 
     # List MAG containers in storage account
     client = MagArchiverClient(account_name=account_name, account_key=account_key)
     containers = client.list_containers(last_modified_thresh=1)
+    logging.debug(f'{client}')
+    logging.debug(f'Discovered containers: {containers}')
 
     # Update MagReleases Table based on discovered containers
-    client.update_releases(containers)
+    num_created, num_errors = client.update_releases(containers)
+    logging.debug(f'Update MagReleases table: num_created={num_created}, num_errors={num_errors}')
 
     # List all discovered MAG releases and sort from oldest to newest based on release date
     releases: List[MagRelease] = client.list_releases(state=MagState.discovered, date_type=MagDateType.release,
                                                       reverse=False)
+    num_releases = len(releases)
+    logging.debug(f'Number of discovered MAG releases: {num_releases}')
+    logging.debug(f'Discovered MAG releases: {releases}')
 
     # If 1 or more MAG releases was found then process the oldest one
     if len(releases) >= 1:
         release: MagRelease = releases[0]
         target_folder = release.source_container
+        logging.info(f'Processing: {release}')
+
+        # Update task to copying
+        release.task = MagTask.copying_to_release_container
+        logging.debug(f'Update task to copying: {release}')
+        release.update()
+        logging.debug(f'Update task to copying finished: {release}')
 
         # Copy source container to target container
-        release.task = MagTask.copying_to_release_container
-        release.update()
+        logging.debug(f'Archive: {release}')
         release.archive(target_container, target_folder)  # TODO: how do you know if the copying failed?
+        logging.debug(f'Archive finished: {release}')
 
-        # Update
+        # Update state to archived
         #   - set state to archived
         #   - add release container and release path
         #   - set archived date to now
@@ -62,15 +82,21 @@ def main(timer: func.TimerRequest) -> None:
         release.release_path = target_folder
         release.archived_date = pendulum.utcnow()
         release.task = MagTask.cleaning_up
+        logging.debug(f'Update state to archived: {release}')
         release.update()
+        logging.debug(f'Update state to archived finished: {release}')
 
         # Cleanup: delete source container
+        logging.debug(f'Cleanup: {release}')
         release.cleanup()
+        logging.debug(f'Cleanup finished: {release}')
 
-        # Update
+        # Update state to done
         # - set state and task to done
         # - set done date to now
         release.state = MagState.done
         release.task = MagTask.done
         release.done_date = pendulum.utcnow()
+        logging.debug(f'Update state to done: {release}')
         release.update()
+        logging.debug(f'Update state to done finished: {release}')

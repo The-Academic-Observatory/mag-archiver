@@ -17,7 +17,7 @@
 import logging
 import re
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Any
 
 import pendulum
 from azure.common import AzureConflictHttpError
@@ -98,6 +98,19 @@ def make_mag_query(start_date: Optional[Pendulum] = None, end_date: Optional[Pen
     return query
 
 
+def hide_if_not_none(secret: Any):
+    """ Hide a secret unless it is None, which means that the user didn't set it.
+
+    :param secret: the secret.
+    :return: None or 'hidden'
+    """
+
+    value = None
+    if secret is not None:
+        value = 'hidden'
+    return value
+
+
 class MagContainer:
 
     def __init__(self, name: str, last_modified: Pendulum, release_date: Pendulum):
@@ -111,6 +124,13 @@ class MagContainer:
         self.name = name
         self.last_modified = last_modified
         self.release_date = release_date
+
+    def __str__(self):
+        return f'Mag Container {self.name}'
+
+    def __repr__(self):
+        return f'MagContainer({self.name}, {self.last_modified.strftime("%Y-%m-%d")}, ' \
+               f'{self.release_date.strftime("%Y-%m-%d")})'
 
 
 class MagRelease:
@@ -288,10 +308,26 @@ class MagRelease:
         return entity
 
     def __str__(self):
-        return self.__repr__()
+        return f'MagRelease {self.release_date.strftime("%Y-%m-%d")}'
 
     def __repr__(self):
-        return f"MAG release {self.release_date.strftime('%Y-%m-%d')}"
+        dt_format = '%Y-%m-%dT%H:%MZ'
+
+        return 'MagRelease(' \
+               f'{self.partition_key}, ' \
+               f'{self.row_key}, ' \
+               f'{self.state.value}, ' \
+               f'{self.task.value}, ' \
+               f'{self.release_date.strftime(dt_format)}, ' \
+               f'{self.source_container}, ' \
+               f'{self.source_container_last_modified.strftime(dt_format)}, ' \
+               f'{self.release_container}, ' \
+               f'{self.release_path}, ' \
+               f'{self.discovered_date.strftime(dt_format)}, ' \
+               f'{self.archived_date.strftime(dt_format)}, ' \
+               f'{self.done_date.strftime(dt_format)}, ' \
+               f'account_name={self.account_name}, ' \
+               f'account_key={hide_if_not_none(self.account_key)})'
 
 
 class MagArchiverClient:
@@ -414,3 +450,12 @@ class MagArchiverClient:
         # Sort from oldest to newest, unless reverse is set
         releases.sort(key=lambda r: getattr(r, MagDateType.attr(date_type)), reverse=reverse)
         return releases
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return 'MagArchiverClient(' \
+               f'account_name={self.account_name}, ' \
+               f'account_key={hide_if_not_none(self.account_key)}, ' \
+               f'sas_token={hide_if_not_none(self.sas_token)})'
