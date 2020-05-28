@@ -63,7 +63,8 @@ func azure functionapp publish <your function app name>
 The architecture of MAG Archiver is illustrated via the deployment and process view diagrams below.
 
 ### Process View
-MAG releases are added as a new Azure Blob storage container in the user's Azure Storage account.
+The MAG subscription adds each new MAG release as a new Azure Blob storage containers in the user's Azure Storage 
+account.
 
 An [Azure Function App](https://azure.microsoft.com/en-us/services/functions/) runs every 10 minutes and checks to 
 see if any new MAG release containers have been added.
