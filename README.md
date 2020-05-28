@@ -9,7 +9,7 @@ The following instructions explain how to setup Mag Archiver.
 * [Install Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 * [Install Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=linux%2Ccsharp%2Cbash)
 * [Create an Azure Storage Account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
-  * Region: westus (a low latency US region from Australia and NZ).
+  * Region: choose an Azure region that is close to the other cloud provider that you want to transfer the data to.
   * Access tier: hot (need to be able to delete containers without cold storage deletion fees)
   * Create container: mag-snapshots
   * Under Blob Service > Lifecycle Management > Code view: add the life-cycle rules from lifecycle-rules.json
@@ -62,8 +62,33 @@ func azure functionapp publish <your function app name>
 ## Architecture
 The architecture of MAG Archiver is illustrated via the deployment and process view diagrams below.
 
+### Process View
+MAG releases are added as a new Azure Blob storage container in the user's Azure Storage account.
+
+An [Azure Function App](https://azure.microsoft.com/en-us/services/functions/) runs every 10 minutes and checks to 
+see if any new MAG release containers have been added.
+
+![process view](docs/process_view.svg)
+
+Metadata about which MAG releases have been discovered and processed are stored in an 
+[Azure Table Storage](https://azure.microsoft.com/en-us/services/storage/tables/) table called `MagReleases`. 
+The `MagReleases` table is also used used to enable the Apache Airflow MAG workflow to query and find out what MAG 
+releases have finished processing and where on the Azure blob storage container they can be downloaded from. A 
+[share access signature (SAS)](https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview) 
+with read only privileges is used to provide the Apache Airflow MAG workflow with access to the table.
+
+When the Function App finds a new MAG release, it copies the files from the container onto a shared container called
+`mag-snapshots` under a folder with the same name as the container it was copied from. After copying the files, the 
+original container is deleted. 
+
+The Function App copies the MAG files to a shared container so that the Apache Airflow MAG workflow only needs to 
+hold a single SAS token, one for the shared container. In the future the copying of files by the Cloud Function can be 
+replaced by a service that compresses the files, as shown in the diagram above.
+
+A total of two SAS tokens are shared: one for the `MagReleases` table and one for the `mag-snapshots` container.
+
 ### Deployment View
+The deployment view below shows what services are used and where they are deployed. 
+
 ![deployment view](docs/deployment_view.svg)
 
-### Process View
-![process view](docs/process_view.svg)
