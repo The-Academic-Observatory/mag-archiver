@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "enabled": true,
+      "name": "mag-snapshots-cleanup",
+      "type": "Lifecycle",
+      "definition": {
+        "actions": {
+          "baseBlob": {
+            "tierToCool": {
+              "daysAfterModificationGreaterThan": 30
+            },
+            "delete": {
+              "daysAfterModificationGreaterThan": 61
+            }
+          }
+        },
+        "filters": {
+          "blobTypes": [
+            "blockBlob"
+          ],
+          "prefixMatch": [
+            "mag-snapshots"
+          ]
+        }
+      }
+    }
+  ]
+}
