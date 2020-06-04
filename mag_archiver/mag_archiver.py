@@ -60,7 +60,9 @@ def main(timer: func.TimerRequest) -> None:
     # If 1 or more MAG releases was found then process the oldest one
     if len(releases) >= 1:
         release: MagRelease = releases[0]
-        target_folder = release.source_container
+        # We want to have the same directory structure here, as this is how the data will be structured in the
+        # Google Cloud Storage bucket when the data is transferred with the Google Cloud data transfer service
+        target_folder = f'telescopes/mag/downloaded/{release.source_container}'
         logging.info(f'Processing: {release}')
 
         # Update task to copying

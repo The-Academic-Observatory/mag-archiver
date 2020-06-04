@@ -438,7 +438,7 @@ class MagArchiverClient:
         # Query and fetch releases
         table_service = TableService(account_name=self.account_name, account_key=self.account_key,
                                      sas_token=self.sas_token)
-        query = make_mag_query(start_date=start_date, end_date=end_date, state=state)
+        query = make_mag_query(start_date=start_date, end_date=end_date, state=state, date_type=date_type)
         entities = table_service.query_entities('MagReleases', filter=query)
 
         # Convert entities into MagRelease objects

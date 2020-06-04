@@ -56,7 +56,7 @@ cd mag-archiver
 
 Deploy the function:
 ```bash
-func azure functionapp publish <your function app name>
+func azure functionapp publish <your function app name> --python
 ```
 
 ## Architecture
