@@ -56,7 +56,7 @@ cd mag-archiver
 
 Deploy the function:
 ```bash
-func azure functionapp publish <your function app name>
+func azure functionapp publish <your function app name> --python
 ```
 
 ## Architecture
@@ -92,4 +92,3 @@ A total of two SAS tokens are shared: one for the `MagReleases` table and one fo
 The deployment view below shows what services are used and where they are deployed. 
 
 ![deployment view](docs/deployment_view.svg)
-
