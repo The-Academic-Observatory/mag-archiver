@@ -2,6 +2,9 @@
 MAG Archiver is an Azure Function App that automatically archives Microsoft Academic Graph (MAG) releases so that they 
 can be transferred to other cloud services.
 
+## Status
+This is a proof of concept; the functionality for archiving and compressing each MAG release has not been implemented yet.
+
 ## Setup
 The following instructions explain how to setup Mag Archiver.
 
@@ -63,7 +66,7 @@ func azure functionapp publish <your function app name> --python
 The architecture of MAG Archiver is illustrated via the deployment and process view diagrams below.
 
 ### Process View
-The MAG subscription adds each new MAG release as a new Azure Blob storage containers in the user's Azure Storage 
+The MAG subscription adds each new MAG release as a new Azure Blob storage container in the user's Azure Storage 
 account.
 
 An [Azure Function App](https://azure.microsoft.com/en-us/services/functions/) runs every 10 minutes and checks to 
