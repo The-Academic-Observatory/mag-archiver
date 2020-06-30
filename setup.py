@@ -17,7 +17,7 @@ setup(
     author='Curtin University',
     author_email='agent@observatory.academy',
     url='https://github.com/The-Academic-Observatory/mag-archiver',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     download_url='https://github.com/The-Academic-Observatory/mag-archiver/v20.05.0.tar.gz',
     keywords=['MAG', 'Microsoft Academic Graph', 'science', 'data', 'workflows', 'academic institutes',
               'academic-observatory'],
