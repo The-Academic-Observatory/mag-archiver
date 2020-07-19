@@ -8,6 +8,9 @@ be transferred to other cloud services.
 with open('requirements.txt') as f:
     install_requires = f.read().splitlines()
 
+    # Remove './' which is required to install the package in the Azure function environment
+    install_requires.remove('./')
+
 setup(
     name='mag-archiver',
     version='20.05.0',
@@ -21,6 +24,7 @@ setup(
     download_url='https://github.com/The-Academic-Observatory/mag-archiver/v20.05.0.tar.gz',
     keywords=['MAG', 'Microsoft Academic Graph', 'science', 'data', 'workflows', 'academic institutes',
               'academic-observatory'],
+    install_requires=install_requires,
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",

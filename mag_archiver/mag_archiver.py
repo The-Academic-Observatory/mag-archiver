@@ -62,7 +62,7 @@ def main(timer: func.TimerRequest) -> None:
         release: MagRelease = releases[0]
         # We want to have the same directory structure here, as this is how the data will be structured in the
         # Google Cloud Storage bucket when the data is transferred with the Google Cloud data transfer service
-        target_folder = f'telescopes/mag/downloaded/{release.source_container}'
+        target_folder = f'telescopes/mag/{release.source_container}'
         logging.info(f'Processing: {release}')
 
         # Update task to copying
