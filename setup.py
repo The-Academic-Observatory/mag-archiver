@@ -25,6 +25,9 @@ setup(
     keywords=['MAG', 'Microsoft Academic Graph', 'science', 'data', 'workflows', 'academic institutes',
               'academic-observatory'],
     install_requires=install_requires,
+    extras_require={
+        'tests': ['liccheck==0.4.*', 'flake8==3.8.*', 'coverage==5.2']
+    },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",

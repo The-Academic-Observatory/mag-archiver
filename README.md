@@ -2,6 +2,11 @@
 MAG Archiver is an Azure Function App that automatically archives Microsoft Academic Graph (MAG) releases so that they 
 can be transferred to other cloud services.
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python Version](https://img.shields.io/badge/python-3.7-blue)](https://img.shields.io/badge/python-3.7-blue)
+![Python package](https://github.com/The-Academic-Observatory/mag-archiver/workflows/Python%20package/badge.svg)
+[![codecov](https://codecov.io/gh/The-Academic-Observatory/mag-archiver/branch/develop/graph/badge.svg)](https://codecov.io/gh/The-Academic-Observatory/mag-archiver)
+
 ## Status
 This is a proof of concept; the functionality for archiving and compressing each MAG release has not been implemented yet.
 

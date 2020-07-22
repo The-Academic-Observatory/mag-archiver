@@ -107,7 +107,7 @@ class TestAzure(unittest.TestCase):
 
             # List containers
             containers = list_containers(self.account_name, self.account_key)
-            self.assertEqual(len(containers), num_containers)
+            self.assertEqual(len(containers), num_containers + 1)
         finally:
             # Cleanup
             for name in names:
