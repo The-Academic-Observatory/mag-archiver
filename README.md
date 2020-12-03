@@ -77,7 +77,7 @@ account.
 An [Azure Function App](https://azure.microsoft.com/en-us/services/functions/) runs every 10 minutes and checks to 
 see if any new MAG release containers have been added.
 
-![process view](docs/process_view.svg)
+![process view](https://raw.githubusercontent.com/The-Academic-Observatory/mag-archiver/develop/docs/process_view.svg)
 
 Metadata about which MAG releases have been discovered and processed are stored in an 
 [Azure Table Storage](https://azure.microsoft.com/en-us/services/storage/tables/) table called `MagReleases`. 
@@ -99,5 +99,5 @@ A total of two SAS tokens are shared: one for the `MagReleases` table and one fo
 ### Deployment View
 The deployment view below shows what services are used and where they are deployed. 
 
-![deployment view](docs/deployment_view.svg)
+![deployment view](https://raw.githubusercontent.com/The-Academic-Observatory/mag-archiver/develop/docs/deployment_view.svg)
 

@@ -1,44 +1,7 @@
-from setuptools import setup, find_packages
-
-long_description = '''
-mag-archiver is an Azure service that automatically archives Microsoft Academic Graph (MAG) releases so that they can 
-be transferred to other cloud services.
-'''
-
-with open('requirements.txt') as f:
-    install_requires = f.read().splitlines()
-
-    # Remove './' which is required to install the package in the Azure function environment
-    install_requires.remove('./')
+from setuptools import setup
 
 setup(
-    name='mag-archiver',
-    version='20.05.0',
-    description='An Azure service that automatically archives Microsoft Academic Graph (MAG) releases.',
-    long_description=long_description,
-    license='Apache License Version 2.0',
-    author='Curtin University',
-    author_email='agent@observatory.academy',
-    url='https://github.com/The-Academic-Observatory/mag-archiver',
-    packages=find_packages(exclude=['tests']),
-    download_url='https://github.com/The-Academic-Observatory/mag-archiver/v20.05.0.tar.gz',
-    keywords=['MAG', 'Microsoft Academic Graph', 'science', 'data', 'workflows', 'academic institutes',
-              'academic-observatory'],
-    install_requires=install_requires,
-    extras_require={
-        'tests': ['liccheck==0.4.*', 'flake8==3.8.*', 'coverage==5.2']
-    },
-    classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Science/Research",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Software Development :: Libraries",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Utilities"
-    ],
+    setup_requires=['pbr'],
+    pbr=True,
     python_requires='>=3.6.6'
 )

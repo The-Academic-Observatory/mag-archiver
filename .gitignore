@@ -46,3 +46,6 @@ __pycache__/
 .vscode
 
 requirements-cleaned.txt
+
+AUTHORS
+ChangeLog
