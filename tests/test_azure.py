@@ -44,8 +44,8 @@ class TestAzure(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(TestAzure, self).__init__(*args, **kwargs)
-        self.account_name = os.getenv('STORAGE_ACCOUNT_NAME')
-        self.account_key = os.getenv('STORAGE_ACCOUNT_KEY')
+        self.account_name = os.getenv('TEST_AZURE_STORAGE_ACCOUNT_NAME')
+        self.account_key = os.getenv('TEST_AZURE_STORAGE_ACCOUNT_KEY')
 
     def test_create_table(self):
         table_name = 'TestCreateTable'
