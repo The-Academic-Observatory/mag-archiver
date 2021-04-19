@@ -144,8 +144,8 @@ def make_mag_release(account_name: str, account_key: str, year: int, month: int,
 class TestMagRelease(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(TestMagRelease, self).__init__(*args, **kwargs)
-        self.account_name = os.getenv('STORAGE_ACCOUNT_NAME')
-        self.account_key = os.getenv('STORAGE_ACCOUNT_KEY')
+        self.account_name = os.getenv('TEST_AZURE_STORAGE_ACCOUNT_NAME')
+        self.account_key = os.getenv('TEST_AZURE_STORAGE_ACCOUNT_KEY')
         create_table(self.account_name, self.account_key, MagRelease.TABLE_NAME)
 
     def test_secrets_hidden(self):
