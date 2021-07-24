@@ -339,7 +339,7 @@ class TestMagArchiverClient(unittest.TestCase):
                 service.delete_entity(MagRelease.TABLE_NAME, "mag", container.name.replace("mag-", ""))
 
     @patch("mag_archiver.mag.list_containers")
-    @patch("pendulum.datetime.now")
+    @patch("pendulum.now")
     def test_list_releases(self, mock_now, mock_list_containers):
         # Mock time
         mock_now.return_value = pendulum.datetime(year=2020, month=5, day=1, hour=1)
