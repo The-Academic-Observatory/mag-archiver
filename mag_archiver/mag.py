@@ -359,7 +359,7 @@ class MagArchiverClient:
         containers: List[ContainerProperties] = list_containers(self.account_name, self.account_key)
 
         tz = pendulum.timezone('UTC')
-        current_time = pendulum.datetime.now(tz)
+        current_time = pendulum.now(tz)
 
         # Select all containers containing MAG releases that were last updated greater than
         mag_containers = []
