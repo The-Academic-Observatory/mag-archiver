@@ -84,7 +84,7 @@ def main(timer: func.TimerRequest) -> None:
         release.state = MagState.archived
         release.release_container = target_container
         release.release_path = target_folder
-        release.archived_date = pendulum.utcnow()
+        release.archived_date = pendulum.now('UTC')
         release.task = MagTask.cleaning_up
         logging.info(f'Update state to archived: {release}')
         release.update()
@@ -100,7 +100,7 @@ def main(timer: func.TimerRequest) -> None:
         # - set done date to now
         release.state = MagState.done
         release.task = MagTask.done
-        release.done_date = pendulum.utcnow()
+        release.done_date = pendulum.now('UTC')
         logging.info(f'Update state to done: {release}')
         release.update()
         logging.info(f'Update state to done finished: {release}')

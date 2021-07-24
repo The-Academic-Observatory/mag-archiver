@@ -189,7 +189,7 @@ class TestMagRelease(unittest.TestCase):
 
             # Update release
             release.state = MagState.archived
-            release.archived_date = pendulum.utcnow().microsecond_(0)
+            release.archived_date = pendulum.now('UTC').microsecond
             release.update()
 
             # Verify that release is updated
