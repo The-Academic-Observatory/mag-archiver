@@ -17,17 +17,15 @@
 import logging
 import re
 from enum import Enum
-from typing import Optional, List, Any
+from typing import Any, List, Optional
 
 import pendulum
+
 from azure.common import AzureConflictHttpError
-from azure.cosmosdb.table.models import EntityProperty, EdmType
+from azure.cosmosdb.table.models import EdmType, EntityProperty
 from azure.cosmosdb.table.tableservice import TableService
 from azure.storage.blob import ContainerProperties
-from pendulum import Pendulum
-
-from mag_archiver.azure import copy_container, delete_container
-from mag_archiver.azure import list_containers
+from mag_archiver.azure import copy_container, delete_container, list_containers
 
 
 class MagState(Enum):
@@ -71,7 +69,7 @@ class MagDateType(Enum):
         return map_[self]
 
 
-def make_mag_query(start_date: Optional[Pendulum] = None, end_date: Optional[Pendulum] = None,
+def make_mag_query(start_date: Optional[pendulum.date] = None, end_date: Optional[pendulum.date] = None,
                    state: Optional[MagState] = None, date_type: MagDateType = MagDateType.release) -> str:
     """ Build a query for the MagReleases table.
 
@@ -113,7 +111,7 @@ def hide_if_not_none(secret: Any):
 
 class MagContainer:
 
-    def __init__(self, name: str, last_modified: Pendulum, release_date: Pendulum):
+    def __init__(self, name: str, last_modified: pendulum.date, release_date: pendulum.date):
         """ Microsoft Academic Graph container class.
 
         :param name: name of the container.
@@ -148,9 +146,9 @@ class MagRelease:
     __ARCHIVED_DATE = 'ArchivedDate'
     __DONE_DATE = 'DoneDate'
 
-    def __init__(self, partition_key: str, row_key: str, state: MagState, task: MagTask, release_date: Pendulum,
-                 source_container: str, source_container_last_modified: Pendulum, release_container: str,
-                 release_path: str, discovered_date: Pendulum, archived_date: Pendulum, done_date: Pendulum,
+    def __init__(self, partition_key: str, row_key: str, state: MagState, task: MagTask, release_date: pendulum.date,
+                 source_container: str, source_container_last_modified: pendulum.date, release_container: str,
+                 release_path: str, discovered_date: pendulum.date, archived_date: pendulum.date, done_date: pendulum.date,
                  account_name: Optional[str] = None, account_key: Optional[str] = None):
         """ Microsoft Academic Graph release class.
 
@@ -422,8 +420,8 @@ class MagArchiverClient:
                     num_errors += 1
         return num_created, num_errors
 
-    def list_releases(self, start_date: Optional[Pendulum] = None,
-                      end_date: Optional[Pendulum] = None, state: Optional[MagState] = None,
+    def list_releases(self, start_date: Optional[pendulum.date] = None,
+                      end_date: Optional[pendulum.date] = None, state: Optional[MagState] = None,
                       date_type: MagDateType = MagDateType.release, reverse: bool = False) -> List[MagRelease]:
         """ List Microsoft Academic releases in the MagReleases Azure Storage Table.
 
