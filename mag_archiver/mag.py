@@ -69,7 +69,7 @@ class MagDateType(Enum):
         return map_[self]
 
 
-def make_mag_query(start_date: Optional[pendulum.date] = None, end_date: Optional[pendulum.date] = None,
+def make_mag_query(start_date: Optional[pendulum.Date] = None, end_date: Optional[pendulum.Date] = None,
                    state: Optional[MagState] = None, date_type: MagDateType = MagDateType.release) -> str:
     """ Build a query for the MagReleases table.
 
@@ -111,7 +111,7 @@ def hide_if_not_none(secret: Any):
 
 class MagContainer:
 
-    def __init__(self, name: str, last_modified: pendulum.date, release_date: pendulum.date):
+    def __init__(self, name: str, last_modified: pendulum.Date, release_date: pendulum.Date):
         """ Microsoft Academic Graph container class.
 
         :param name: name of the container.
@@ -420,8 +420,8 @@ class MagArchiverClient:
                     num_errors += 1
         return num_created, num_errors
 
-    def list_releases(self, start_date: Optional[pendulum.date] = None,
-                      end_date: Optional[pendulum.date] = None, state: Optional[MagState] = None,
+    def list_releases(self, start_date: Optional[pendulum.Date] = None,
+                      end_date: Optional[pendulum.Date] = None, state: Optional[MagState] = None,
                       date_type: MagDateType = MagDateType.release, reverse: bool = False) -> List[MagRelease]:
         """ List Microsoft Academic releases in the MagReleases Azure Storage Table.
 
