@@ -70,8 +70,8 @@ class MagDateType(Enum):
 
 
 def make_mag_query(
-    start_date: Optional[pendulum.Date] = None,
-    end_date: Optional[pendulum.Date] = None,
+    start_date: Optional[pendulum.DateTime] = None,
+    end_date: Optional[pendulum.DateTime] = None,
     state: Optional[MagState] = None,
     date_type: MagDateType = MagDateType.release,
 ) -> str:
