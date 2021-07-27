@@ -19,12 +19,17 @@ jobs:
 
       - name: Install packages
         run: |
+          echo ${PBR_VERSION}
           python -m pip install --upgrade pip
           pip install -e .
+        env:
+          PBR_VERSION: ${{ github.event.ref }}
 
       - name: Build packages
         run: |
           python3 setup.py sdist
+        env:
+          PBR_VERSION: ${{ github.event.ref }}
 
       - name: Publish mag-archiver
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
