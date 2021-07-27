@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - name: Set PBR_VERSION
-        run: echo "PBR_VERSION=${GITHUB_REF#refs/*/}" >> $PBR_VERSION
+        run: echo "PBR_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     
       - name: Checkout
         uses: actions/checkout@v2
